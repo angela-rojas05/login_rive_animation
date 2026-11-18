@@ -32,24 +32,22 @@ class _LoginScreenState extends State<LoginScreen> {
   final emailCtrl = TextEditingController();
   final passwordCtrl = TextEditingController();
 
-  String? emailError;
-  String? passError;
-
   //5.2 Variable para mostrar el CircularProgressIndicator mientras carga
   bool _isLoading = false;
 
-  // 4.3 Validadores
-  bool isValidEmail(String email) {
-    final re = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-    return re.hasMatch(email);
-  }
-
-  bool isValidPassword(String pass) {
-    // mínimo 8, una mayúscula, una minúscula, un dígito y un especial
-    final re = RegExp(
-      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$',
-    );
-    return re.hasMatch(pass);
+  void _showGlobalError() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Credenciales inválidas. Verifica tu correo y contraseña.',
+          ),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 
   //4.4 Dar acción al botón
@@ -58,23 +56,16 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = emailCtrl.text.trim();
     final pass = passwordCtrl.text;
 
-    final emailTypeError = isValidEmail(email) ? null : 'Email inválido';
-    final passTypeError = isValidPassword(pass) ? null : 'Contraseña inválida';
-
-    setState(() {
-      emailError = emailTypeError;
-      passError = passTypeError;
-    });
-
     FocusScope.of(context).unfocus();
     _typingDebounce?.cancel();
     _isChecking?.change(false);
     _isHandsUp?.change(false);
     _numLook?.value = 50.0;
 
-    //4.9 Si algún campo tiene formato inválido, activar fallo y detener aquí
-    if (emailTypeError != null || passTypeError != null) {
+    // Hito 1 - A (OWASP): Solo validar que los campos no estén vacíos (sin Regex ni errores por campo)
+    if (email.isEmpty || pass.isEmpty) {
       _trigFail?.fire();
+      _showGlobalError();
       return;
     }
 
@@ -92,6 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       //5.6 Apagar loading, disparar éxito del osito y esperar a que termine su animación
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -105,12 +97,13 @@ class _LoginScreenState extends State<LoginScreen> {
         MaterialPageRoute(builder: (_) => const ProductsScreen()),
       );
     } catch (e) {
-      //5.8 Si Firebase rechaza el login, apagar loading y mostrar al osito triste
+      //5.8 Si Firebase rechaza el login, apagar loading, mostrar osito triste y mensaje global único (OWASP)
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
-        passError = "Credenciales incorrectas en Firebase";
       });
       _trigFail?.fire();
+      _showGlobalError();
     }
   }
 
@@ -186,7 +179,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    errorText: emailError,
                     hintText: "email@ejemplo.com",
                     prefixIcon: const Icon(Icons.email),
                     border: OutlineInputBorder(
@@ -208,7 +200,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                   obscureText: _isObscure,
                   decoration: InputDecoration(
-                    errorText: passError,
                     hintText: "Password",
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
