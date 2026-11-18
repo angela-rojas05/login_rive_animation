@@ -6,6 +6,7 @@ import 'dart:async';
 //5.1 Importar Firebase Auth y la pantalla de productos
 import 'package:firebase_auth/firebase_auth.dart';
 import 'products_screen.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -250,9 +251,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       const Text("Don't have an account?"),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          // Hito 1 - B (h1-4): Navegar a SignUpScreen con Navigator.push
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SignUpScreen(),
+                            ),
+                          );
+                        },
                         child: const Text(
-                          "register",
+                          "Sign up",
                           style: TextStyle(
                             color: Colors.blue,
                             fontWeight: FontWeight.bold,
