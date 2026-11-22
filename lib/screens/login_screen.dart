@@ -108,6 +108,119 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // Hito 1 - C (h1-7): Hacer funcional "Forgot password?" con Dialog y sendPasswordResetEmail
+  Future<void> _showForgotPasswordDialog() async {
+    final resetEmailCtrl = TextEditingController(text: emailCtrl.text.trim());
+    String? dialogError;
+    bool isSending = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Recuperar contraseña'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.',
+                    style: TextStyle(fontSize: 13.5),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: resetEmailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: 'Correo electrónico',
+                      hintText: 'usuario@tecdesoftware.edu.mx',
+                      errorText: dialogError,
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSending
+                      ? null
+                      : () => Navigator.pop(dialogContext),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: isSending
+                      ? null
+                      : () async {
+                          final resetEmail = resetEmailCtrl.text.trim();
+                          if (resetEmail.isEmpty || !resetEmail.contains('@')) {
+                            setDialogState(() {
+                              dialogError = 'Ingresa un correo válido';
+                            });
+                            return;
+                          }
+
+                          setDialogState(() {
+                            dialogError = null;
+                            isSending = true;
+                          });
+
+                          try {
+                            await FirebaseAuth.instance.sendPasswordResetEmail(
+                              email: resetEmail,
+                            );
+                            if (!dialogContext.mounted) return;
+                            Navigator.pop(dialogContext);
+
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(this.context)
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Correo de recuperación enviado a $resetEmail. Revisa tu bandeja o spam.',
+                                  ),
+                                  backgroundColor: Colors.green.shade700,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                          } on FirebaseAuthException catch (e) {
+                            setDialogState(() {
+                              isSending = false;
+                              dialogError = e.code == 'invalid-email'
+                                  ? 'El formato del correo no es válido'
+                                  : 'No se pudo enviar el correo. Verifica la dirección.';
+                            });
+                          } catch (_) {
+                            setDialogState(() {
+                              isSending = false;
+                              dialogError =
+                                  'Error al enviar el correo de recuperación';
+                            });
+                          }
+                        },
+                  child: isSending
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Enviar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    resetEmailCtrl.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -218,7 +331,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _showForgotPasswordDialog,
+                    child: const Text(
+                      "Forgot password?",
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                  ),
+                ),
                 SizedBox(
                   width: size.width,
                   child: const Text(
