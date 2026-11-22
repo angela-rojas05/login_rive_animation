@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'login_screen.dart';
 
 class ProductsScreen extends StatelessWidget {
   const ProductsScreen({super.key});
@@ -25,7 +27,24 @@ class ProductsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Productos de Spring Boot')),
+      appBar: AppBar(
+        title: const Text('Productos de Spring Boot'),
+        actions: [
+          // Hito 1 - C (h1-8): Botón de Cerrar sesión en el AppBar del catálogo
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Cerrar sesión',
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              if (!context.mounted) return;
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       // 6.3 FutureBuilder: espera la respuesta de la API y dibuja el resultado
       body: FutureBuilder<List<dynamic>>(
         future: fetchProducts(),
