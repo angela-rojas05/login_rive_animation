@@ -62,13 +62,19 @@ class ProductsScreen extends StatelessWidget {
           final products = snapshot.data ?? [];
 
           // 6.4 Mostrar los elementos de la base de datos en una lista sencilla
+          // Hito 1 - D (h1-10): Mostrar además de nombre, stock y precio, la categoría product['category']['category']
           return ListView.builder(
             itemCount: products.length,
             itemBuilder: (context, index) {
               final product = products[index];
+              final categoryName = product['category'] != null
+                  ? product['category']['category']
+                  : 'Sin categoría';
               return ListTile(
                 title: Text(product['name'].toString()),
-                subtitle: Text('Stock: ${product['stock']}'),
+                subtitle: Text(
+                  'Categoría: $categoryName • Stock: ${product['stock']}',
+                ),
                 trailing: Text('\$${product['price']}'),
               );
             },
