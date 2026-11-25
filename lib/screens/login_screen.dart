@@ -32,6 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final emailCtrl = TextEditingController();
   final passwordCtrl = TextEditingController();
+  final _resetEmailCtrl = TextEditingController();
 
   //5.2 Variable para mostrar el CircularProgressIndicator mientras carga
   bool _isLoading = false;
@@ -110,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Hito 1 - C (h1-7): Hacer funcional "Forgot password?" con Dialog y sendPasswordResetEmail
   Future<void> _showForgotPasswordDialog() async {
-    final resetEmailCtrl = TextEditingController(text: emailCtrl.text.trim());
+    _resetEmailCtrl.text = emailCtrl.text.trim();
     String? dialogError;
     bool isSending = false;
 
@@ -121,42 +122,47 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               title: const Text('Recuperar contraseña'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.',
-                    style: TextStyle(fontSize: 13.5),
-                  ),
-                  const SizedBox(height: 14),
-                  TextField(
-                    controller: resetEmailCtrl,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      labelText: 'Correo electrónico',
-                      hintText: 'usuario@tecdesoftware.edu.mx',
-                      errorText: dialogError,
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.',
+                      style: TextStyle(fontSize: 13.5),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _resetEmailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        labelText: 'Correo electrónico',
+                        hintText: 'usuario@tecdesoftware.edu.mx',
+                        errorText: dialogError,
+                        prefixIcon: const Icon(Icons.email_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
                   onPressed: isSending
                       ? null
-                      : () => Navigator.pop(dialogContext),
+                      : () {
+                          FocusScope.of(dialogContext).unfocus();
+                          Navigator.pop(dialogContext);
+                        },
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
                   onPressed: isSending
                       ? null
                       : () async {
-                          final resetEmail = resetEmailCtrl.text.trim();
+                          final resetEmail = _resetEmailCtrl.text.trim();
                           if (resetEmail.isEmpty || !resetEmail.contains('@')) {
                             setDialogState(() {
                               dialogError = 'Ingresa un correo válido';
@@ -174,6 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               email: resetEmail,
                             );
                             if (!dialogContext.mounted) return;
+                            FocusScope.of(dialogContext).unfocus();
                             Navigator.pop(dialogContext);
 
                             if (!mounted) return;
@@ -217,8 +224,6 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       },
     );
-
-    resetEmailCtrl.dispose();
   }
 
   @override
@@ -405,6 +410,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     emailCtrl.dispose();
     passwordCtrl.dispose();
+    _resetEmailCtrl.dispose();
     _emailFocusNode.dispose();
     _passwordFocusNode.dispose();
     _typingDebounce?.cancel();
