@@ -69,7 +69,27 @@ class ProductsScreen extends StatelessWidget {
               final categoryName = product['category'] != null
                   ? product['category']['category']
                   : 'Sin categoría';
+              final imageUrl = product['imageUrl']?.toString() ?? '';
               return ListTile(
+                // Hito 2 - A (h2-2): Mostrar imagen desde Supabase Storage con Image.network y errorBuilder
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    imageUrl,
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stack) => Container(
+                      width: 56,
+                      height: 56,
+                      color: Colors.grey.shade200,
+                      child: const Icon(
+                        Icons.image_not_supported,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                ),
                 title: Text(product['name'].toString()),
                 subtitle: Text(
                   'Categoría: $categoryName • Stock: ${product['stock']}',
